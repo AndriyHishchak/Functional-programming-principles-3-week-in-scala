@@ -1,6 +1,6 @@
 package objsets
 
-import TweetReader.*
+import TweetReader.ParseTweets
 
 /**
  * A class to represent tweets.
@@ -64,8 +64,8 @@ abstract class TweetSet extends TweetSetInterface:
    * Question: Should we implement this method here, or should it remain abstract
    * and be implemented in the subclasses?
    */
-  def mostRetweeted: Tweet = ???
-
+  def mostRetweeted: Tweet
+  def mostRetweetedAcc(acc: Tweet) : Tweet
   /**
    * Returns a list containing all tweets of this set, sorted by retweet count
    * in descending order. In other words, the head of the resulting list should
@@ -75,7 +75,7 @@ abstract class TweetSet extends TweetSetInterface:
    * Question: Should we implement this method here, or should it remain abstract
    * and be implemented in the subclasses?
    */
-  def descendingByRetweet: TweetList = ???
+  def descendingByRetweet: TweetList
 
   /**
    * The following methods are already implemented
@@ -107,6 +107,11 @@ abstract class TweetSet extends TweetSetInterface:
 class Empty extends TweetSet:
   def filterAcc(p: Tweet => Boolean, acc: TweetSet): TweetSet = acc
 
+  def mostRetweeted: Tweet = throw new NoSuchElementException
+  def mostRetweetedAcc(acc: Tweet) : Tweet = acc
+
+  def descendingByRetweet: TweetList = Nil
+
   def union(that: TweetSet): TweetSet = that
   /**
    * The following methods are already implemented
@@ -123,6 +128,15 @@ class Empty extends TweetSet:
 class NonEmpty(elem: Tweet, left: TweetSet, right: TweetSet) extends TweetSet:
 
   def filterAcc(p: Tweet => Boolean, acc: TweetSet): TweetSet = right.filterAcc(p, left.filterAcc(p,if(p(elem)) acc.incl(elem) else acc))
+
+  def mostRetweeted: Tweet =
+  {
+    mostRetweetedAcc(elem)
+  }
+  def mostRetweetedAcc(acc: Tweet): Tweet = right.mostRetweetedAcc(left.mostRetweetedAcc(if (elem.retweets > acc.retweets) elem else acc))
+
+
+  def descendingByRetweet: TweetList = new Cons(mostRetweeted,remove(mostRetweeted).descendingByRetweet)
 
   def union(that: TweetSet): TweetSet = (right union (left union that) ).incl(elem)
 
